@@ -14,6 +14,7 @@ Adding a new agent touches five layers: the agent module, `src/agent/mod.rs`, un
 
 - **`claude`** — Claude Code CLI, curl installer, onboarding skip via `.claude.json`, agent-level network policy, anthropic+vertexai inference, skills at `/sandbox/.claude/skills`.
 - **`opencode`** — Opencode CLI, curl installer, per-inference config submodule pattern (one `configure()` per provider), all three inference providers, skills at `/sandbox/.opencode/skills`.
+- **`openclaw`** — OpenClaw CLI, curl installer, no onboarding skip, anthropic+vertexai inference, skills at `/sandbox/.openclaw/skills`.
 
 ## Step 1 — choose the file structure
 

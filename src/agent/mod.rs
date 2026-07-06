@@ -15,10 +15,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod claude;
+mod openclaw;
 mod opencode;
 
 #[cfg(test)]
 pub use claude::ClaudeAgent;
+#[cfg(test)]
+pub use openclaw::OpenclawAgent;
 #[cfg(test)]
 pub use opencode::OpencodeAgent;
 
@@ -72,12 +75,14 @@ pub trait Agent {
 #[derive(Clone, ValueEnum)]
 pub enum AgentKind {
     Claude,
+    Openclaw,
     Opencode,
 }
 
 pub fn from_kind(kind: AgentKind) -> Box<dyn Agent> {
     match kind {
         AgentKind::Claude => Box::new(claude::ClaudeAgent),
+        AgentKind::Openclaw => Box::new(openclaw::OpenclawAgent),
         AgentKind::Opencode => Box::new(opencode::OpencodeAgent),
     }
 }
@@ -96,6 +101,12 @@ mod tests {
     fn from_kind_opencode_installs_opencode() {
         let agent = from_kind(AgentKind::Opencode);
         assert!(agent.install().contains("https://opencode.ai/install"));
+    }
+
+    #[test]
+    fn from_kind_openclaw_installs_openclaw() {
+        let agent = from_kind(AgentKind::Openclaw);
+        assert!(agent.install().contains("https://openclaw.ai/install.sh"));
     }
 
     #[test]

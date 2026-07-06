@@ -112,6 +112,11 @@ static UBUNTU_OPENCODE_OPENAI_IMAGE: OnceLock<String> = OnceLock::new();
 static FEDORA_OPENCODE_OPENAI_IMAGE: OnceLock<String> = OnceLock::new();
 static UBI_OPENCODE_OPENAI_IMAGE: OnceLock<String> = OnceLock::new();
 static HUMMINGBIRD_OPENCODE_OPENAI_IMAGE: OnceLock<String> = OnceLock::new();
+static UBUNTU_OPENCLAW_IMAGE: OnceLock<String> = OnceLock::new();
+static FEDORA_OPENCLAW_IMAGE: OnceLock<String> = OnceLock::new();
+static UBI_OPENCLAW_IMAGE: OnceLock<String> = OnceLock::new();
+static HUMMINGBIRD_OPENCLAW_IMAGE: OnceLock<String> = OnceLock::new();
+static UBUNTU_OPENCLAW_VERTEXAI_IMAGE: OnceLock<String> = OnceLock::new();
 static UBUNTU_OPENCODE_OPENAI_MODEL_IMAGE: OnceLock<String> = OnceLock::new();
 static UBUNTU_NO_POLICY_IMAGE: OnceLock<String> = OnceLock::new();
 static UBUNTU_CLAUDE_NO_AGENT_SETTINGS_IMAGE: OnceLock<String> = OnceLock::new();
@@ -625,6 +630,15 @@ fn check_opencode_in_path(image: &str, expected: bool) {
     }
 }
 
+fn check_openclaw_in_path(image: &str, expected: bool) {
+    let out = run_in_image(image, "which openclaw");
+    if expected {
+        assert!(out.status.success(), "openclaw not found in PATH");
+    } else {
+        assert!(!out.status.success(), "openclaw should not be in PATH");
+    }
+}
+
 fn check_claude_policy(image: &str, expected: bool) {
     let out = run_in_image(image, "cat /etc/openshell/policy.yaml");
     assert!(out.status.success(), "failed to read policy.yaml");
@@ -727,12 +741,29 @@ fn check_openai_policy(image: &str, expected: bool) {
     }
 }
 
+fn check_openclaw_policy(image: &str, expected: bool) {
+    let out = run_in_image(image, "cat /etc/openshell/policy.yaml");
+    assert!(out.status.success(), "failed to read policy.yaml");
+    let policy = String::from_utf8_lossy(&out.stdout);
+    if expected {
+        assert!(
+            policy.contains("name: openclaw"),
+            "openclaw policy rule not found in policy.yaml"
+        );
+    } else {
+        assert!(
+            !policy.contains("name: openclaw"),
+            "openclaw policy rule should not be present in policy.yaml"
+        );
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Matrix: base_image × agent — one test module per variant
 // ---------------------------------------------------------------------------
 
 macro_rules! image_tests {
-    ($mod_name:ident, $image_fn:ident, has_claude: $has_claude:literal, has_opencode: $has_opencode:literal, has_anthropic: $has_anthropic:literal, has_vertexai: $has_vertexai:literal, has_ollama: $has_ollama:literal, has_openai: $has_openai:literal) => {
+    ($mod_name:ident, $image_fn:ident, has_claude: $has_claude:literal, has_openclaw: $has_openclaw:literal, has_opencode: $has_opencode:literal, has_anthropic: $has_anthropic:literal, has_vertexai: $has_vertexai:literal, has_ollama: $has_ollama:literal, has_openai: $has_openai:literal) => {
         mod $mod_name {
             use super::*;
 
@@ -762,6 +793,12 @@ macro_rules! image_tests {
 
             #[test]
             #[ignore]
+            fn openclaw_in_path() {
+                check_openclaw_in_path($image_fn(), $has_openclaw);
+            }
+
+            #[test]
+            #[ignore]
             fn opencode_in_path() {
                 check_opencode_in_path($image_fn(), $has_opencode);
             }
@@ -776,6 +813,12 @@ macro_rules! image_tests {
             #[ignore]
             fn policy_has_claude_rules() {
                 check_claude_policy($image_fn(), $has_claude);
+            }
+
+            #[test]
+            #[ignore]
+            fn policy_has_openclaw_rules() {
+                check_openclaw_policy($image_fn(), $has_openclaw);
             }
 
             #[test]
@@ -811,34 +854,39 @@ macro_rules! image_tests {
     };
 }
 
-image_tests!(ubuntu,                  ubuntu_image,                  has_claude: false, has_opencode: false, has_anthropic: false, has_vertexai: false, has_ollama: false, has_openai: false);
-image_tests!(ubuntu_claude,           ubuntu_claude_image,           has_claude: true,  has_opencode: false, has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
-image_tests!(ubuntu_opencode,         ubuntu_opencode_image,         has_claude: false, has_opencode: true,  has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
-image_tests!(ubuntu_claude_vertexai,  ubuntu_claude_vertexai_image,  has_claude: true,  has_opencode: false, has_anthropic: false, has_vertexai: true,  has_ollama: false, has_openai: false);
-image_tests!(ubuntu_opencode_vertexai,ubuntu_opencode_vertexai_image,has_claude: false, has_opencode: true,  has_anthropic: false, has_vertexai: true,  has_ollama: false, has_openai: false);
-image_tests!(fedora,                  fedora_image,                  has_claude: false, has_opencode: false, has_anthropic: false, has_vertexai: false, has_ollama: false, has_openai: false);
-image_tests!(fedora_claude,           fedora_claude_image,           has_claude: true,  has_opencode: false, has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
-image_tests!(fedora_opencode,         fedora_opencode_image,         has_claude: false, has_opencode: true,  has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
-image_tests!(fedora_claude_vertexai,  fedora_claude_vertexai_image,  has_claude: true,  has_opencode: false, has_anthropic: false, has_vertexai: true,  has_ollama: false, has_openai: false);
-image_tests!(fedora_opencode_vertexai,fedora_opencode_vertexai_image,has_claude: false, has_opencode: true,  has_anthropic: false, has_vertexai: true,  has_ollama: false, has_openai: false);
-image_tests!(ubi,                     ubi_image,                     has_claude: false, has_opencode: false, has_anthropic: false, has_vertexai: false, has_ollama: false, has_openai: false);
-image_tests!(ubi_claude,              ubi_claude_image,              has_claude: true,  has_opencode: false, has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
-image_tests!(ubi_opencode,            ubi_opencode_image,            has_claude: false, has_opencode: true,  has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
-image_tests!(ubi_claude_vertexai,     ubi_claude_vertexai_image,     has_claude: true,  has_opencode: false, has_anthropic: false, has_vertexai: true,  has_ollama: false, has_openai: false);
-image_tests!(ubi_opencode_vertexai,   ubi_opencode_vertexai_image,   has_claude: false, has_opencode: true,  has_anthropic: false, has_vertexai: true,  has_ollama: false, has_openai: false);
-image_tests!(hummingbird,                     hummingbird_image,                     has_claude: false, has_opencode: false, has_anthropic: false, has_vertexai: false, has_ollama: false, has_openai: false);
-image_tests!(hummingbird_claude,              hummingbird_claude_image,              has_claude: true,  has_opencode: false, has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
-image_tests!(hummingbird_opencode,            hummingbird_opencode_image,            has_claude: false, has_opencode: true,  has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
-image_tests!(hummingbird_claude_vertexai,     hummingbird_claude_vertexai_image,     has_claude: true,  has_opencode: false, has_anthropic: false, has_vertexai: true,  has_ollama: false, has_openai: false);
-image_tests!(hummingbird_opencode_vertexai,   hummingbird_opencode_vertexai_image,   has_claude: false, has_opencode: true,  has_anthropic: false, has_vertexai: true,  has_ollama: false, has_openai: false);
-image_tests!(ubuntu_opencode_ollama,          ubuntu_opencode_ollama_image,          has_claude: false, has_opencode: true,  has_anthropic: false, has_vertexai: false, has_ollama: true,  has_openai: false);
-image_tests!(fedora_opencode_ollama,          fedora_opencode_ollama_image,          has_claude: false, has_opencode: true,  has_anthropic: false, has_vertexai: false, has_ollama: true,  has_openai: false);
-image_tests!(ubi_opencode_ollama,             ubi_opencode_ollama_image,             has_claude: false, has_opencode: true,  has_anthropic: false, has_vertexai: false, has_ollama: true,  has_openai: false);
-image_tests!(hummingbird_opencode_ollama,     hummingbird_opencode_ollama_image,     has_claude: false, has_opencode: true,  has_anthropic: false, has_vertexai: false, has_ollama: true,  has_openai: false);
-image_tests!(ubuntu_opencode_openai,          ubuntu_opencode_openai_image,          has_claude: false, has_opencode: true,  has_anthropic: false, has_vertexai: false, has_ollama: false, has_openai: true);
-image_tests!(fedora_opencode_openai,          fedora_opencode_openai_image,          has_claude: false, has_opencode: true,  has_anthropic: false, has_vertexai: false, has_ollama: false, has_openai: true);
-image_tests!(ubi_opencode_openai,             ubi_opencode_openai_image,             has_claude: false, has_opencode: true,  has_anthropic: false, has_vertexai: false, has_ollama: false, has_openai: true);
-image_tests!(hummingbird_opencode_openai,     hummingbird_opencode_openai_image,     has_claude: false, has_opencode: true,  has_anthropic: false, has_vertexai: false, has_ollama: false, has_openai: true);
+image_tests!(ubuntu,                  ubuntu_image,                  has_claude: false, has_openclaw: false, has_opencode: false, has_anthropic: false, has_vertexai: false, has_ollama: false, has_openai: false);
+image_tests!(ubuntu_claude,           ubuntu_claude_image,           has_claude: true,  has_openclaw: false, has_opencode: false, has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
+image_tests!(ubuntu_opencode,         ubuntu_opencode_image,         has_claude: false, has_openclaw: false, has_opencode: true,  has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
+image_tests!(ubuntu_claude_vertexai,  ubuntu_claude_vertexai_image,  has_claude: true,  has_openclaw: false, has_opencode: false, has_anthropic: false, has_vertexai: true,  has_ollama: false, has_openai: false);
+image_tests!(ubuntu_opencode_vertexai,ubuntu_opencode_vertexai_image,has_claude: false, has_openclaw: false, has_opencode: true,  has_anthropic: false, has_vertexai: true,  has_ollama: false, has_openai: false);
+image_tests!(fedora,                  fedora_image,                  has_claude: false, has_openclaw: false, has_opencode: false, has_anthropic: false, has_vertexai: false, has_ollama: false, has_openai: false);
+image_tests!(fedora_claude,           fedora_claude_image,           has_claude: true,  has_openclaw: false, has_opencode: false, has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
+image_tests!(fedora_opencode,         fedora_opencode_image,         has_claude: false, has_openclaw: false, has_opencode: true,  has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
+image_tests!(fedora_claude_vertexai,  fedora_claude_vertexai_image,  has_claude: true,  has_openclaw: false, has_opencode: false, has_anthropic: false, has_vertexai: true,  has_ollama: false, has_openai: false);
+image_tests!(fedora_opencode_vertexai,fedora_opencode_vertexai_image,has_claude: false, has_openclaw: false, has_opencode: true,  has_anthropic: false, has_vertexai: true,  has_ollama: false, has_openai: false);
+image_tests!(ubi,                     ubi_image,                     has_claude: false, has_openclaw: false, has_opencode: false, has_anthropic: false, has_vertexai: false, has_ollama: false, has_openai: false);
+image_tests!(ubi_claude,              ubi_claude_image,              has_claude: true,  has_openclaw: false, has_opencode: false, has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
+image_tests!(ubi_opencode,            ubi_opencode_image,            has_claude: false, has_openclaw: false, has_opencode: true,  has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
+image_tests!(ubi_claude_vertexai,     ubi_claude_vertexai_image,     has_claude: true,  has_openclaw: false, has_opencode: false, has_anthropic: false, has_vertexai: true,  has_ollama: false, has_openai: false);
+image_tests!(ubi_opencode_vertexai,   ubi_opencode_vertexai_image,   has_claude: false, has_openclaw: false, has_opencode: true,  has_anthropic: false, has_vertexai: true,  has_ollama: false, has_openai: false);
+image_tests!(hummingbird,                     hummingbird_image,                     has_claude: false, has_openclaw: false, has_opencode: false, has_anthropic: false, has_vertexai: false, has_ollama: false, has_openai: false);
+image_tests!(hummingbird_claude,              hummingbird_claude_image,              has_claude: true,  has_openclaw: false, has_opencode: false, has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
+image_tests!(hummingbird_opencode,            hummingbird_opencode_image,            has_claude: false, has_openclaw: false, has_opencode: true,  has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
+image_tests!(hummingbird_claude_vertexai,     hummingbird_claude_vertexai_image,     has_claude: true,  has_openclaw: false, has_opencode: false, has_anthropic: false, has_vertexai: true,  has_ollama: false, has_openai: false);
+image_tests!(hummingbird_opencode_vertexai,   hummingbird_opencode_vertexai_image,   has_claude: false, has_openclaw: false, has_opencode: true,  has_anthropic: false, has_vertexai: true,  has_ollama: false, has_openai: false);
+image_tests!(ubuntu_openclaw,           ubuntu_openclaw_image,           has_claude: false, has_openclaw: true,  has_opencode: false, has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
+image_tests!(fedora_openclaw,           fedora_openclaw_image,           has_claude: false, has_openclaw: true,  has_opencode: false, has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
+image_tests!(ubi_openclaw,              ubi_openclaw_image,              has_claude: false, has_openclaw: true,  has_opencode: false, has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
+image_tests!(hummingbird_openclaw,      hummingbird_openclaw_image,      has_claude: false, has_openclaw: true,  has_opencode: false, has_anthropic: true,  has_vertexai: false, has_ollama: false, has_openai: false);
+image_tests!(ubuntu_openclaw_vertexai,  ubuntu_openclaw_vertexai_image,  has_claude: false, has_openclaw: true,  has_opencode: false, has_anthropic: false, has_vertexai: true,  has_ollama: false, has_openai: false);
+image_tests!(ubuntu_opencode_ollama,          ubuntu_opencode_ollama_image,          has_claude: false, has_openclaw: false, has_opencode: true,  has_anthropic: false, has_vertexai: false, has_ollama: true,  has_openai: false);
+image_tests!(fedora_opencode_ollama,          fedora_opencode_ollama_image,          has_claude: false, has_openclaw: false, has_opencode: true,  has_anthropic: false, has_vertexai: false, has_ollama: true,  has_openai: false);
+image_tests!(ubi_opencode_ollama,             ubi_opencode_ollama_image,             has_claude: false, has_openclaw: false, has_opencode: true,  has_anthropic: false, has_vertexai: false, has_ollama: true,  has_openai: false);
+image_tests!(hummingbird_opencode_ollama,     hummingbird_opencode_ollama_image,     has_claude: false, has_openclaw: false, has_opencode: true,  has_anthropic: false, has_vertexai: false, has_ollama: true,  has_openai: false);
+image_tests!(ubuntu_opencode_openai,          ubuntu_opencode_openai_image,          has_claude: false, has_openclaw: false, has_opencode: true,  has_anthropic: false, has_vertexai: false, has_ollama: false, has_openai: true);
+image_tests!(fedora_opencode_openai,          fedora_opencode_openai_image,          has_claude: false, has_openclaw: false, has_opencode: true,  has_anthropic: false, has_vertexai: false, has_ollama: false, has_openai: true);
+image_tests!(ubi_opencode_openai,             ubi_opencode_openai_image,             has_claude: false, has_openclaw: false, has_opencode: true,  has_anthropic: false, has_vertexai: false, has_ollama: false, has_openai: true);
+image_tests!(hummingbird_opencode_openai,     hummingbird_opencode_openai_image,     has_claude: false, has_openclaw: false, has_opencode: true,  has_anthropic: false, has_vertexai: false, has_ollama: false, has_openai: true);
 
 // ---------------------------------------------------------------------------
 // Workspace helpers for feature-based builds
@@ -1215,6 +1263,90 @@ fn no_workspace_config_network_hosts_ubuntu_image() -> &'static str {
             "openshell-test-no-workspace-config-network-hosts-ubuntu:integration",
             NETWORK_HOSTS_WORKSPACE,
             &["--with-policy"],
+        )
+    })
+}
+
+fn ubuntu_openclaw_image() -> &'static str {
+    UBUNTU_OPENCLAW_IMAGE.get_or_init(|| {
+        build_image(
+            "openshell-test-ubuntu-openclaw:integration",
+            &[
+                "--agent",
+                "openclaw",
+                "--inference",
+                "anthropic",
+                "--with-policy",
+            ],
+        )
+    })
+}
+
+fn fedora_openclaw_image() -> &'static str {
+    FEDORA_OPENCLAW_IMAGE.get_or_init(|| {
+        let config = fedora_config_dir();
+        build_image(
+            "openshell-test-fedora-openclaw:integration",
+            &[
+                "--config",
+                config.path().to_str().unwrap(),
+                "--agent",
+                "openclaw",
+                "--inference",
+                "anthropic",
+                "--with-policy",
+            ],
+        )
+    })
+}
+
+fn ubi_openclaw_image() -> &'static str {
+    UBI_OPENCLAW_IMAGE.get_or_init(|| {
+        let config = ubi_config_dir();
+        build_image(
+            "openshell-test-ubi-openclaw:integration",
+            &[
+                "--config",
+                config.path().to_str().unwrap(),
+                "--agent",
+                "openclaw",
+                "--inference",
+                "anthropic",
+                "--with-policy",
+            ],
+        )
+    })
+}
+
+fn hummingbird_openclaw_image() -> &'static str {
+    HUMMINGBIRD_OPENCLAW_IMAGE.get_or_init(|| {
+        let config = hummingbird_config_dir();
+        build_image(
+            "openshell-test-hummingbird-openclaw:integration",
+            &[
+                "--config",
+                config.path().to_str().unwrap(),
+                "--agent",
+                "openclaw",
+                "--inference",
+                "anthropic",
+                "--with-policy",
+            ],
+        )
+    })
+}
+
+fn ubuntu_openclaw_vertexai_image() -> &'static str {
+    UBUNTU_OPENCLAW_VERTEXAI_IMAGE.get_or_init(|| {
+        build_image(
+            "openshell-test-ubuntu-openclaw-vertexai:integration",
+            &[
+                "--agent",
+                "openclaw",
+                "--inference",
+                "vertexai",
+                "--with-policy",
+            ],
         )
     })
 }
@@ -2854,6 +2986,11 @@ fn cleanup_images() {
         "openshell-test-no-workspace-config-claude-skills-ubuntu:integration",
         "openshell-test-no-workspace-config-opencode-skills-ubuntu:integration",
         "openshell-test-no-workspace-config-network-hosts-ubuntu:integration",
+        "openshell-test-ubuntu-openclaw:integration",
+        "openshell-test-fedora-openclaw:integration",
+        "openshell-test-ubi-openclaw:integration",
+        "openshell-test-hummingbird-openclaw:integration",
+        "openshell-test-ubuntu-openclaw-vertexai:integration",
         "openshell-test-ubuntu-no-policy:integration",
         "openshell-test-ubuntu-claude-no-agent-settings:integration",
         "openshell-test-ubuntu-ssl-certs:integration",

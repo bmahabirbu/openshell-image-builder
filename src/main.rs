@@ -512,6 +512,32 @@ mod tests {
     }
 
     #[test]
+    fn build_policy_with_openclaw_agent_includes_openclaw_rule() {
+        let yaml = build_policy(
+            BASE_POLICY_YAML,
+            Some(&agent::OpenclawAgent),
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+        assert!(yaml.contains("name: openclaw"));
+    }
+
+    #[test]
+    fn build_policy_with_openclaw_agent_includes_binary_path() {
+        let yaml = build_policy(
+            BASE_POLICY_YAML,
+            Some(&agent::OpenclawAgent),
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+        assert!(yaml.contains("/sandbox/.local/bin/openclaw"));
+    }
+
+    #[test]
     fn build_policy_without_inference_has_no_anthropic_rule() {
         let yaml = build_policy(
             BASE_POLICY_YAML,
@@ -933,6 +959,44 @@ mod tests {
             false,
             false,
             None,
+            &ContainerCli::Podman,
+            &FakeRunner(0),
+        );
+        assert!(result.is_ok(), "expected Ok, got {result:?}");
+    }
+
+    #[test]
+    fn run_with_openclaw_agent_succeeds() {
+        let tmp = tempfile::tempdir().unwrap();
+        let result = run(
+            "test:latest",
+            Some(tmp.path().to_path_buf()),
+            false,
+            Some(agent::AgentKind::Openclaw),
+            None,
+            None,
+            None,
+            false,
+            false,
+            &ContainerCli::Podman,
+            &FakeRunner(0),
+        );
+        assert!(result.is_ok(), "expected Ok, got {result:?}");
+    }
+
+    #[test]
+    fn run_with_openclaw_agent_and_ollama_inference_succeeds() {
+        let tmp = tempfile::tempdir().unwrap();
+        let result = run(
+            "test:latest",
+            Some(tmp.path().to_path_buf()),
+            false,
+            Some(agent::AgentKind::Openclaw),
+            Some(inference::InferenceKind::Ollama),
+            None,
+            None,
+            false,
+            false,
             &ContainerCli::Podman,
             &FakeRunner(0),
         );
