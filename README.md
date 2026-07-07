@@ -42,8 +42,9 @@ The tool assembles the image in layers — base image, agent installation, agent
 
 | Agent      | User settings | Auto-onboarding | Skills |
 | ---------- | ------------- | --------------- | ------ |
-| `claude`   | Yes           | Yes             | Yes<br>`~/.claude/skills/`   |
-| `opencode` | Yes           | N/A             | Yes<br>`~/.opencode/skills/` |
+| `claude`   | Yes           | Yes             | Yes<br>`~/.claude/skills/`         |
+| `goose`    | Yes           | Yes             | Yes<br>`~/.config/goose/skills/`   |
+| `opencode` | Yes           | N/A             | Yes<br>`~/.opencode/skills/`       |
 
 ### Agent × Inference Supported Features
 
@@ -51,6 +52,10 @@ The tool assembles the image in layers — base image, agent installation, agent
 | ---------- | ----------- | ------------------------------ | ------------------------------------------ | ------------------------------------------------ |
 | `claude`   | `anthropic` | N/A                            | Yes<br>`ENV ANTHROPIC_BASE_URL`            | Yes<br>`model` in `.claude/settings.json`        |
 | `claude`   | `vertexai`  | N/A                            | No<br>fixed endpoint                       | Yes<br>`model` in `.claude/settings.json`        |
+| `goose`    | `anthropic` | Yes<br>`ENV GOOSE_PROVIDER`     | No                                         | Yes<br>`GOOSE_MODEL` in `.config/goose/config.yaml` |
+| `goose`    | `vertexai`  | Yes<br>`ENV GOOSE_PROVIDER`     | No<br>fixed endpoint                       | Yes<br>`GOOSE_MODEL` in `.config/goose/config.yaml` |
+| `goose`    | `ollama`    | Yes<br>`ENV GOOSE_PROVIDER`     | No                                         | Yes<br>`GOOSE_MODEL` in `.config/goose/config.yaml` |
+| `goose`    | `openai`    | Yes<br>`ENV GOOSE_PROVIDER`     | No                                         | Yes<br>`GOOSE_MODEL` in `.config/goose/config.yaml` |
 | `opencode` | `anthropic` | N/A, Yes if endpoint override  | Yes<br>opencode config `baseURL`           | Yes<br>`model` in `.config/opencode/config.json` |
 | `opencode` | `vertexai`  | N/A                            | No<br>fixed endpoint                       | Yes<br>`model` in `.config/opencode/config.json` |
 | `opencode` | `ollama`    | Yes<br>Ollama provider config  | Yes<br>`baseURL` in Ollama provider config | Yes<br>`model` in `.config/opencode/config.json` |
@@ -225,10 +230,12 @@ Pass `--agent` to install an agent into the image.
 | Agent       | Value      | Description                    |
 | ----------- | ---------- | ------------------------------ |
 | Claude Code | `claude`   | Anthropic's Claude Code CLI    |
+| Goose       | `goose`    | Block's Goose AI coding agent  |
 | OpenCode    | `opencode` | OpenCode AI coding agent       |
 
 ```sh
 openshell-image-builder --runtime podman --agent claude myimage:latest
+openshell-image-builder --runtime podman --agent goose myimage:latest
 openshell-image-builder --runtime podman --agent opencode myimage:latest
 ```
 
@@ -569,7 +576,7 @@ openshell-image-builder [OPTIONS] <TAG>
 | `<TAG>`                        | Tag for the built image (e.g. `myimage:latest`)                    |
 | `--runtime <RUNTIME>`          | Container CLI to use for building images (`podman`, `docker`, `container`) |
 | `--config <CONFIG>`            | Path to config directory containing `config.toml` (env: `OPENSHELL_IMAGE_BUILDER_CONFIG`) |
-| `--agent <AGENT>`              | Agent to install in the image (`claude`, `opencode`)               |
+| `--agent <AGENT>`              | Agent to install in the image (`claude`, `goose`, `opencode`)      |
 | `--inference <INFERENCE>`      | Inference server the agent will connect to (`anthropic`, `vertexai`, `ollama`, `openai`) |
 | `--endpoint <URL>`             | Override the inference provider's default endpoint URL (see [Custom endpoint](#custom-endpoint---endpoint)) |
 | `--model <MODEL>`              | Default model for the agent to use (see [Default model](#default-model---model)) |

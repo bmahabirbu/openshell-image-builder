@@ -15,10 +15,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod claude;
+mod goose;
 mod opencode;
 
 #[cfg(test)]
 pub use claude::ClaudeAgent;
+#[cfg(test)]
+pub use goose::GooseAgent;
 #[cfg(test)]
 pub use opencode::OpencodeAgent;
 
@@ -72,12 +75,14 @@ pub trait Agent {
 #[derive(Clone, ValueEnum)]
 pub enum AgentKind {
     Claude,
+    Goose,
     Opencode,
 }
 
 pub fn from_kind(kind: AgentKind) -> Box<dyn Agent> {
     match kind {
         AgentKind::Claude => Box::new(claude::ClaudeAgent),
+        AgentKind::Goose => Box::new(goose::GooseAgent),
         AgentKind::Opencode => Box::new(opencode::OpencodeAgent),
     }
 }
@@ -90,6 +95,12 @@ mod tests {
     fn from_kind_claude_installs_claude() {
         let agent = from_kind(AgentKind::Claude);
         assert!(agent.install().contains("https://claude.ai/install.sh"));
+    }
+
+    #[test]
+    fn from_kind_goose_installs_goose() {
+        let agent = from_kind(AgentKind::Goose);
+        assert!(agent.install().contains("aaif-goose/goose"));
     }
 
     #[test]
