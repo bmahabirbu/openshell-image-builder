@@ -29,7 +29,10 @@ impl Agent for OpenclawAgent {
     }
 
     fn install(&self) -> String {
-        "RUN curl -fsSL https://openclaw.ai/install.sh | bash\nENV PATH=/sandbox/.local/bin:$PATH"
+        "RUN curl -fsSL https://openclaw.ai/install-cli.sh | bash && \\\n    \
+             mkdir -p /sandbox/.local/bin && \\\n    \
+             ln -sf /sandbox/.openclaw/bin/openclaw /sandbox/.local/bin/openclaw\n\
+         ENV PATH=/sandbox/.local/bin:$PATH"
             .to_string()
     }
 
@@ -168,7 +171,7 @@ mod tests {
         assert!(
             OpenclawAgent
                 .install()
-                .contains("https://openclaw.ai/install.sh")
+                .contains("https://openclaw.ai/install-cli.sh")
         );
     }
 

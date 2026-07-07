@@ -57,6 +57,7 @@ pub fn generate(
                 "bind-utils",
                 "ca-certificates",
                 "curl",
+                "git",
                 "iproute",
                 "iptables",
                 "iputils",
@@ -76,6 +77,7 @@ pub fn generate(
             &[
                 "bind-utils",
                 "ca-certificates",
+                "git",
                 "iputils",
                 "net-tools",
                 "nftables",
@@ -91,6 +93,7 @@ pub fn generate(
             tag,
             &[
                 "bind-utils",
+                "git",
                 "iproute",
                 "openssh-server",
                 "procps-ng",
@@ -215,6 +218,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \
         curl \
         dnsutils \
+        git \
         iproute2 \
         iptables \
         nftables \

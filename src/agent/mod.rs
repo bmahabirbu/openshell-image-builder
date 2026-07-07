@@ -106,7 +106,11 @@ mod tests {
     #[test]
     fn from_kind_openclaw_installs_openclaw() {
         let agent = from_kind(AgentKind::Openclaw);
-        assert!(agent.install().contains("https://openclaw.ai/install.sh"));
+        assert!(
+            agent
+                .install()
+                .contains("https://openclaw.ai/install-cli.sh")
+        );
     }
 
     #[test]
