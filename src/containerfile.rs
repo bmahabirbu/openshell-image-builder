@@ -225,12 +225,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         iputils-ping \
         net-tools \
         netcat-openbsd \
+        nodejs \
+        npm \
         openssh-sftp-server \
         procps \
+        python3 \
         traceroute \
     && rm -rf /var/lib/apt/lists/*
 
-{ca_cert_section}RUN groupadd -r supervisor && useradd -r -g supervisor -s /usr/sbin/nologin supervisor && \
+{ca_cert_section}RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
+
+RUN groupadd -r supervisor && useradd -r -g supervisor -s /usr/sbin/nologin supervisor && \
     groupadd -r sandbox && useradd -r -g sandbox -d /sandbox -s /bin/bash sandbox
 "#
     )
