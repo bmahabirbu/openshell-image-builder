@@ -978,6 +978,7 @@ mod tests {
             None,
             false,
             false,
+            None,
             &ContainerCli::Podman,
             &FakeRunner(0),
         );
@@ -997,6 +998,7 @@ mod tests {
             None,
             false,
             false,
+            None,
             &ContainerCli::Podman,
             &FakeRunner(0),
         );
